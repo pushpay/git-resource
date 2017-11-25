@@ -7,11 +7,12 @@ get_ssm_parameter() {
       return
     fi
 
-    SSM_ENV_VAR_NAME=$1
-    ENV_VAR_NAME=`echo "$SSM_ENV_VAR_NAME" | cut -c5-`
-    SSM_PARAM_NAME="${!SSM_ENV_VAR_NAME}"
+    SSM_PARAM_NAME=$1
+    #SSM_ENV_VAR_NAME=$1
+    #ENV_VAR_NAME=`echo "$SSM_ENV_VAR_NAME" | cut -c5-`
+    #SSM_PARAM_NAME="${!SSM_ENV_VAR_NAME}"
     
-    echo "Getting parameter $SSM_PARAM_NAME from SSM parameter store if it exists and setting into the variable $ENV_VAR_NAME"  1>&2
+    echo "Getting parameter $SSM_PARAM_NAME from SSM parameter store if it exists"  1>&2
     
     SSM_VALUE=`aws ssm get-parameters --with-decryption --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text`
     
@@ -26,10 +27,11 @@ get_ssm_parameter() {
 load_pubkey() {
   local private_key_path=$TMPDIR/git-resource-private-key
 
-  if [ -z "$SSM_private_key" ];then
+  local private_key_param=$(jq -r '.source.SSM_private_key // ""' < $1)
+  if [ -z "$private_key_param" ];then
     (jq -r '.source.private_key // empty' < $1) > $private_key_path
   else
-    get_ssm_parameter "SSM_private_key" > $private_key_path
+    get_ssm_parameter $private_key_param > $private_key_path
   fi
 
   (jq -r '.source.private_key // empty' < $1) > $private_key_path
@@ -163,16 +165,18 @@ git_metadata() {
 
 configure_credentials() {
 
-  if [ -z "$SSM_username" ];then
+  local username_param=$(jq -r '.source.SSM_username // ""' < $1)
+  if [ -z "$username_param" ];then
     local username=$(jq -r '.source.username // ""' < $1)
   else  
-    local username=$(get_ssm_parameter "SSM_username")
+    local username=$(get_ssm_parameter $username_param)
   fi
 
-  if [ -z "$SSM_password" ];then
+  local password_param=$(jq -r '.source.SSM_password // ""' < $1)
+  if [ -z "$password_param" ];then
     local password=$(jq -r '.source.password // ""' < $1)
   else  
-    local password=$(get_ssm_parameter "SSM_password")
+    local password=$(get_ssm_parameter $password_param)
   fi
 
   rm -f $HOME/.netrc
