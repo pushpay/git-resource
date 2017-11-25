@@ -1,5 +1,6 @@
 export TMPDIR=${TMPDIR:-/tmp}
 export GIT_CRYPT_KEY_PATH=~/git-crypt.key
+export REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r`
 
 get_ssm_parameter() {
     if [ -z "$1" ];then
@@ -14,7 +15,7 @@ get_ssm_parameter() {
     
     echo "Getting parameter $SSM_PARAM_NAME from SSM parameter store if it exists"  1>&2
     
-    SSM_VALUE=`aws ssm get-parameters --with-decryption --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text`
+    SSM_VALUE=`aws ssm get-parameters --with-decryption --region $REGION --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text`
     
     return $SSM_VALUE
     #echo "SSM_VALUE = $SSM_VALUE"
