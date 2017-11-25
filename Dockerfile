@@ -21,7 +21,10 @@ RUN apk --no-cache add \
   perl \
   tar \
   openssl \
-  libstdc++
+  libstdc++ \
+  python3
+
+RUN pip3 install --upgrade awscli
 
 COPY --from=tunnelbuilder /root/proxytunnel/proxytunnel proxytunnel
 

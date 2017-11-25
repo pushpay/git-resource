@@ -27,6 +27,8 @@ load_pubkey() {
   local private_key_path=$TMPDIR/git-resource-private-key
 
   if [ -z "$SSM_private_key" ];then
+    (jq -r '.source.private_key // empty' < $1) > $private_key_path
+  else
     get_ssm_parameter "SSM_private_key" > $private_key_path
   fi
 
@@ -162,15 +164,15 @@ git_metadata() {
 configure_credentials() {
 
   if [ -z "$SSM_username" ];then
-    local username=$(get_ssm_parameter "SSM_username")
-  else  
     local username=$(jq -r '.source.username // ""' < $1)
+  else  
+    local username=$(get_ssm_parameter "SSM_username")
   fi
 
   if [ -z "$SSM_password" ];then
-    local password=$(get_ssm_parameter "SSM_password")
-  else  
     local password=$(jq -r '.source.password // ""' < $1)
+  else  
+    local password=$(get_ssm_parameter "SSM_password")
   fi
 
   rm -f $HOME/.netrc
