@@ -15,9 +15,9 @@ get_ssm_parameter() {
     
     echo "Getting parameter $SSM_PARAM_NAME from SSM parameter store if it exists"  1>&2
     
-    SSM_VALUE=`aws ssm get-parameters --with-decryption --region $REGION --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text`
+    aws ssm get-parameters --with-decryption --region $REGION --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text
     
-    return $SSM_VALUE
+    
     #echo "SSM_VALUE = $SSM_VALUE"
     #COMMAND="export $ENV_VAR_NAME=$SSM_VALUE"
     #echo $COMMAND
