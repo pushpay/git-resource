@@ -132,7 +132,29 @@ git_metadata() {
     add_git_metadata_message
 }
 
+get_parameter() {
+    if [ -z "$1" ];then
+      echo "Skipping the parameter $1"  1>&2
+      return
+    fi
+
+    SSM_ENV_VAR_NAME=$1
+    ENV_VAR_NAME=`echo "$SSM_ENV_VAR_NAME" | cut -c5-`
+    SSM_PARAM_NAME="${!SSM_ENV_VAR_NAME}"
+    
+    echo "Getting parameter $SSM_PARAM_NAME from SSM parameter store if it exists and setting into the variable $ENV_VAR_NAME"  1>&2
+    
+    SSM_VALUE=`aws ssm get-parameters --with-decryption --names "${SSM_PARAM_NAME}"  --query 'Parameters[*].Value' --output text`
+    
+    #echo "SSM_VALUE = $SSM_VALUE"
+    COMMAND="export $ENV_VAR_NAME=$SSM_VALUE"
+    #echo $COMMAND
+    eval ${COMMAND}
+    #echo "$ENV_VAR_NAME = ${!ENV_VAR_NAME}"
+}
+
 configure_credentials() {
+
   local username=$(jq -r '.source.username // ""' < $1)
   local password=$(jq -r '.source.password // ""' < $1)
 
@@ -140,6 +162,17 @@ configure_credentials() {
   if [ "$username" != "" -a "$password" != "" ]; then
     echo "default login $username password $password" > $HOME/.netrc
   fi
+}
+
+
+load_ssm_vars() {
+  echo "Checking for SSM environment variables"  1>&2
+  printenv 1>&2
+  while read name ; do 
+      get_parameter $name
+  done <<EOT
+$(printenv | grep -o '^SSM_[^=]*')
+EOT
 }
 
 load_git_crypt_key() {

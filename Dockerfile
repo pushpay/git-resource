@@ -204,3 +204,11 @@ ADD integration-tests /tests/integration-tests
 RUN /tests/integration-tests/integration.sh
 
 FROM resource
+
+RUN mkdir -p /usr/local/src/git-resource
+
+COPY ./entrypoint.sh /usr/local/src/git-resource/entrypoint.sh
+
+RUN chmod +x /usr/local/src/git-resource/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/src/git-resource/entrypoint.sh"]
